@@ -28,5 +28,9 @@ part 'parser/feature_parser.dart';
 part 'parser/coverage_parser.dart';
 part 'parser/xml_helpers.dart';
 
+// Interop
+part 'interop/geojson_builder.dart';
+part 'interop/wkt_builder.dart';
+
 // Utils
 part 'utils/geotiff_metadata.dart';

@@ -198,6 +198,13 @@ Interior-Ringe zwingend benötigt.
 - WKT Builder
 - CSV als optionales Folge-Modul prüfen
 
+**CSV-Entscheidung:** CSV-Export wird in v1 nicht im Core umgesetzt. GML-Features
+lassen sich über `GeoJsonBuilder` nach GeoJSON und von dort trivial nach CSV
+überführen (z. B. mit `package:csv`). Ein dedizierter `CsvBuilder` rechtfertigt
+sich erst bei konkretem Bedarf, da die Abbildung von verschachtelten Properties
+und Geometrien auf flache CSV-Zeilen domänenspezifische Entscheidungen erfordert,
+die besser anwendungsseitig getroffen werden.
+
 ### Phase 6: WCS / OWS
 
 - OWS Exception Parser
