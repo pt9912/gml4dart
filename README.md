@@ -127,14 +127,25 @@ docker build --target doc -t gml4dart:doc .
 docker build --target publish-check -t gml4dart:publish-check .
 ```
 
-Mit lokalem Dart SDK:
+
+### Manueller Publish via Docker
+
+Für den allerersten Publish eines neuen Packages (automatisiertes Publishing erfordert eine existierende Version auf pub.dev):
 
 ```bash
-dart pub get
-dart analyze
-dart test
-dart doc
-dart pub publish --dry-run
+# gml4dart
+docker build --target publish-check -t gml4dart:publish .
+docker run --rm -it --net=host gml4dart:publish sh -c 'dart pub publish'
+```
+
+Automated-Publishing-Konfiguration:
+- gml4dart: https://pub.dev/packages/gml4dart/admin
+
+Mit lokalem Dart SDK (>=3.0.0):
+
+```bash
+# gml4dart
+dart pub get && dart analyze && dart test
 ```
 
 ## Nicht enthalten
