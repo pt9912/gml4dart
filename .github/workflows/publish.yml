@@ -1,0 +1,21 @@
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - 'gml4dart-v*.*.*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish gml4dart
+    permissions:
+      contents: read
+      id-token: write
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      environment: pub.dev
+      working-directory: .
