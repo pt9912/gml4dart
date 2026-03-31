@@ -42,5 +42,8 @@ part 'wcs/capabilities_parser.dart';
 // Generators
 part 'generators/coverage_generator.dart';
 
+// Streaming
+part 'parser/streaming/gml_feature_stream_parser.dart';
+
 // Utils
 part 'utils/geotiff_metadata.dart';
