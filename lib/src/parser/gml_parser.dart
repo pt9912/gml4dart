@@ -90,6 +90,11 @@ GmlRootContent? _parseRootElement(
     return _parseFeatureCollection(root, issues);
   }
 
+  // Coverage types
+  if (_isCoverageElement(localName)) {
+    return _parseCoverage(root, issues);
+  }
+
   // Standalone geometry
   if (_isGmlNamespace(root.namespaceUri)) {
     final geom = _parseGeometry(root, issues);
