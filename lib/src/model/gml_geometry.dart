@@ -1,4 +1,4 @@
-part of '../model.dart';
+part of '../gml4dart_base.dart';
 
 sealed class GmlGeometry extends GmlNode implements GmlRootContent {
   const GmlGeometry({this.version, this.srsName});

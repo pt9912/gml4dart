@@ -1,4 +1,4 @@
-part of '../model.dart';
+part of '../gml4dart_base.dart';
 
 enum GmlVersion {
   v2_1_2,

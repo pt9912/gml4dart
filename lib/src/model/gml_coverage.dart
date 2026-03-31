@@ -1,4 +1,4 @@
-part of '../model.dart';
+part of '../gml4dart_base.dart';
 
 sealed class GmlCoverage extends GmlNode implements GmlRootContent {
   const GmlCoverage();

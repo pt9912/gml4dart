@@ -1,5 +1,10 @@
 library;
 
+import 'dart:convert';
+
+import 'package:xml/xml.dart';
+
+// Model
 part 'model/gml_coordinate.dart';
 part 'model/gml_coverage.dart';
 part 'model/gml_document.dart';
@@ -13,3 +18,9 @@ part 'model/gml_property_value.dart';
 part 'model/gml_root_content.dart';
 part 'model/gml_unsupported_node.dart';
 part 'model/gml_version.dart';
+
+// Parser
+part 'parser/gml_parser.dart';
+part 'parser/geometry_parser.dart';
+part 'parser/feature_parser.dart';
+part 'parser/xml_helpers.dart';

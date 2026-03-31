@@ -1,4 +1,4 @@
-part of '../model.dart';
+part of '../gml4dart_base.dart';
 
 final class GmlCoordinate {
   const GmlCoordinate(this.x, this.y, [this.z, this.m]);
