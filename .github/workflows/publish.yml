@@ -10,8 +10,70 @@ permissions:
   id-token: write
 
 jobs:
+  validate-release:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Validate tag, version and changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#gml4dart-v}"
+
+          if [[ "$tag" == "$version" ]]; then
+            echo "Tag must start with gml4dart-v"
+            exit 1
+          fi
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag version must be SemVer without prerelease suffix: $version"
+            exit 1
+          fi
+
+          package_version="$(awk '/^version:/ { print $2; exit }' pubspec.yaml)"
+          if [[ "$version" != "$package_version" ]]; then
+            echo "Tag version $version does not match pubspec.yaml version $package_version"
+            exit 1
+          fi
+
+          if ! grep -q "^## $version\$" CHANGELOG.md; then
+            echo "CHANGELOG.md must contain a release heading '## $version'"
+            exit 1
+          fi
+
+      - name: Ensure tag commit is on main or master
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for branch in main master; do
+            if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+              git fetch --no-tags origin "$branch" --depth=1
+              if git merge-base --is-ancestor "$GITHUB_SHA" "FETCH_HEAD"; then
+                echo "Release commit found on $branch"
+                exit 0
+              fi
+            fi
+          done
+
+          echo "Release tag must point to a commit on main or master"
+          exit 1
+
   publish:
     name: Publish gml4dart
+    needs: validate-release
     permissions:
       contents: read
       id-token: write

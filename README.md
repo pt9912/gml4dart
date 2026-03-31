@@ -112,6 +112,7 @@ Web-Builds.
 Die Architektur und der Port-Plan sind in den Projekt-Dokumenten beschrieben:
 
 - [docs/architecture.md](docs/architecture.md)
+- [docs/releasing.md](docs/releasing.md)
 - [PortGML.md](PortGML.md)
 
 ## Entwicklung
