@@ -68,12 +68,13 @@ class GmlFeatureStreamParser {
   }
 
   /// Parses features from a stream of UTF-8 byte
-  /// chunks.
+  /// chunks. Uses a stateful decoder that handles
+  /// multi-byte characters split across chunks.
   static Stream<GmlFeature> parseByteStream(
     Stream<List<int>> source,
   ) =>
       parseStringStream(
-        source.map(utf8.decode),
+        source.transform(utf8.decoder),
       );
 
   /// Processes features via a callback, returning

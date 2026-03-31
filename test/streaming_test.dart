@@ -293,6 +293,61 @@ void main() {
 
         expect(features, hasLength(3));
       });
+
+      test(
+          'handles multi-byte UTF-8 split '
+          'across chunks', () async {
+        // German umlauts (ä=2 bytes, ü=2 bytes)
+        // and emoji (4 bytes) in feature properties
+        const xml = '''
+<wfs:FeatureCollection
+    xmlns:wfs="http://www.opengis.net/wfs/2.0"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:app="http://example.com">
+  <wfs:member>
+    <app:Place gml:id="p1">
+      <app:name>München</app:name>
+    </app:Place>
+  </wfs:member>
+  <wfs:member>
+    <app:Place gml:id="p2">
+      <app:name>Zürich</app:name>
+    </app:Place>
+  </wfs:member>
+</wfs:FeatureCollection>''';
+
+        final bytes = utf8.encode(xml);
+
+        // Find a multi-byte char boundary to split
+        // 'ü' in München is at some offset —
+        // use 1-byte chunks to guarantee splits
+        // inside multi-byte sequences.
+        final chunks = bytes
+            .map((b) => [b])
+            .toList();
+
+        final features =
+            await GmlFeatureStreamParser
+                .parseByteStream(
+                  Stream.fromIterable(chunks),
+                )
+                .toList();
+
+        expect(features, hasLength(2));
+        expect(features[0].id, 'p1');
+        expect(
+          (features[0].properties['name']!
+                  as GmlStringProperty)
+              .value,
+          'München',
+        );
+        expect(
+          (features[1].properties['name']!
+                  as GmlStringProperty)
+              .value,
+          'Zürich',
+        );
+      });
     });
 
     group('processFeatures callback', () {
@@ -490,8 +545,9 @@ void main() {
 
           final sw = Stopwatch()..start();
           var count = 0;
-          await for (final _ in GmlFeatureStreamParser
-              .parseStringStream(
+          await for (final _
+              in GmlFeatureStreamParser
+                  .parseStringStream(
             Stream.fromIterable(chunks),
           )) {
             count++;
@@ -519,6 +575,68 @@ void main() {
               'Ratio: ${ratio.toStringAsFixed(1)}x '
               '(${tSmall.inMilliseconds}ms vs '
               '${tLarge.inMilliseconds}ms)',
+        );
+      });
+
+      test(
+          'per-feature throughput stays within '
+          'threshold', () async {
+        // Parse 1000 features and assert that
+        // average per-feature time does not
+        // exceed 2ms (generous for CI).
+        const n = 1000;
+        final buf = StringBuffer()
+          ..write(
+            '<wfs:FeatureCollection'
+            ' xmlns:wfs='
+            '"http://www.opengis.net/wfs/2.0"'
+            ' xmlns:gml='
+            '"http://www.opengis.net/gml/3.2"'
+            ' xmlns:app="http://example.com">',
+          );
+        for (var i = 0; i < n; i++) {
+          buf.write(
+            '<wfs:member>'
+            '<app:I gml:id="i$i">'
+            '<app:v>$i</app:v>'
+            '</app:I>'
+            '</wfs:member>',
+          );
+        }
+        buf.write('</wfs:FeatureCollection>');
+
+        final xml = buf.toString();
+        final chunks = <String>[];
+        for (var i = 0; i < xml.length; i += 500) {
+          chunks.add(xml.substring(
+            i,
+            (i + 500).clamp(0, xml.length),
+          ));
+        }
+
+        final sw = Stopwatch()..start();
+        var count = 0;
+        await for (final _
+            in GmlFeatureStreamParser
+                .parseStringStream(
+          Stream.fromIterable(chunks),
+        )) {
+          count++;
+        }
+        sw.stop();
+
+        expect(count, n);
+
+        final usPerFeature =
+            sw.elapsedMicroseconds / n;
+        // Threshold: 2ms (2000µs) per feature.
+        // Typical is well under 500µs.
+        expect(
+          usPerFeature,
+          lessThan(2000),
+          reason: 'Per-feature avg: '
+              '${usPerFeature.toStringAsFixed(0)}µs '
+              '(threshold: 2000µs)',
         );
       });
     });
