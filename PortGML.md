@@ -7,7 +7,7 @@ Dieses Dokument beschreibt die Portierungsstrategie für die TypeScript-Biblioth
 Repository [`/Development/flutter/gml4dart`](/Development/flutter/gml4dart).
 
 Die Zielarchitektur und alle verbindlichen Architekturentscheidungen sind in
-[architecture.md](architecture.md) beschrieben. Dieses Dokument konzentriert
+[architecture.md](docs/architecture.md) beschrieben. Dieses Dokument konzentriert
 sich auf die Portierung: Mapping, Phasen, Risiken und Umsetzungsreihenfolge.
 
 Ziel ist keine 1:1-Übersetzung auf Dateiebene, sondern eine Dart-native
@@ -63,7 +63,7 @@ Siehe insbesondere:
 
 ## Empfohlene Zielarchitektur in Dart
 
-Die vollständige Architektur ist in [architecture.md](architecture.md)
+Die vollständige Architektur ist in [architecture.md](docs/architecture.md)
 beschrieben. Hier die Kurzfassung für den Portierungskontext:
 
 ### Packages
@@ -81,7 +81,7 @@ spätere Trennung vor.
 Die öffentliche Core-API ist dokumentzentriert (`GmlDocument.parse...`), nicht
 parserzentriert. Alle Details zu API-Design, Fehlermodell, DOM- vs.
 Streaming-Pfad und Streaming-Wiederverwendung sind in
-[architecture.md](architecture.md) festgehalten.
+[architecture.md](docs/architecture.md) festgehalten.
 
 Kurzfassung für den Portierungskontext:
 
@@ -116,7 +116,7 @@ Die TypeScript-Library `s-gml` trennt diese beiden Wege bereits sauber:
 ## Domain-Modell
 
 Das vollständige Domain-Modell mit Typhierarchie, Koordinaten-Modell und
-Feature-Properties ist in [architecture.md](architecture.md) definiert.
+Feature-Properties ist in [architecture.md](docs/architecture.md) definiert.
 
 Portierungsrelevante Kurzfassung:
 
@@ -223,9 +223,13 @@ Interior-Ringe zwingend benötigt.
 
 Ausführliche Teststrategie in [architecture.md → Teststrategie](architecture.md#teststrategie).
 
+### Fixture-Quellen
+
+- `/Development/s-gml/test/gml/`
+
 Portierungsspezifisch:
 
-- Fixtures aus `/Development/s-gml/test/gml/` übernehmen
+- Fixtures aus den oben genannten Quellen übernehmen
 - TypeScript-Testergebnisse als Referenz für erwartete Dart-Ergebnisse nutzen
 - pro portiertem Modul mindestens die bestehenden TS-Testfälle abdecken
 
