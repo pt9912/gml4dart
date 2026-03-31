@@ -32,5 +32,15 @@ part 'parser/xml_helpers.dart';
 part 'interop/geojson_builder.dart';
 part 'interop/wkt_builder.dart';
 
+// OWS
+part 'ows/ows_exception.dart';
+
+// WCS
+part 'wcs/request_builder.dart';
+part 'wcs/capabilities_parser.dart';
+
+// Generators
+part 'generators/coverage_generator.dart';
+
 // Utils
 part 'utils/geotiff_metadata.dart';
