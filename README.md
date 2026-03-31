@@ -1,6 +1,7 @@
 # gml4dart
 
 Pure-Dart-Bibliothek zum Parsen und Weiterverarbeiten von GML 2.1.2 und 3.x.
+Portiert von der TypeScript-Bibliothek [`s-gml`](https://github.com/pt9912/s-gml).
 
 `gml4dart` liefert ein typisiertes Domain-Modell für Geometrien, Features,
 FeatureCollections und Coverage-Typen. Dazu kommen leichte Interop-Bausteine
