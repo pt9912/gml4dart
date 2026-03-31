@@ -226,6 +226,17 @@ die besser anwendungsseitig getroffen werden.
 - Datei-/URL-Helfer
 - XSD-Validierung nur bei klarer Anforderung
 
+**I/O-Package:** Umgesetzt als `package:gml4dart/gml4dart_io.dart` mit `GmlIo`-Klasse.
+Bietet `parseFile`/`parseFileSync`, `parseUrl`, `streamFeaturesFromFile` und
+`streamFeaturesFromUrl`. Nutzt `dart:io` und ist damit nicht web-kompatibel —
+der Core unter `package:gml4dart/gml4dart.dart` bleibt `dart:io`-frei.
+
+**XSD-Validierung:** In v1 nicht umgesetzt. GML-XSD-Validierung erfordert einen
+vollständigen XSD-Prozessor, der in reinem Dart nicht existiert. Plattformabhängige
+Lösungen (z. B. via FFI zu libxml2) sind möglich, aber nur bei konkretem Bedarf
+sinnvoll. Die Parse-Diagnostics über `GmlParseIssue` decken strukturelle Fehler
+bereits ab.
+
 ## Teststrategie
 
 Ausführliche Teststrategie in [architecture.md → Teststrategie](architecture.md#teststrategie).
