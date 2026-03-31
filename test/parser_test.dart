@@ -509,5 +509,295 @@ void main() {
         );
       });
     });
+
+    // --- Phase 3: Extended geometries ---
+
+    group('Curve', () {
+      test('parses Curve with LineStringSegment', () {
+        const xml = '''
+<gml:Curve xmlns:gml="http://www.opengis.net/gml/3.2">
+  <gml:segments>
+    <gml:LineStringSegment>
+      <gml:posList>0 0 1 1 2 2</gml:posList>
+    </gml:LineStringSegment>
+  </gml:segments>
+</gml:Curve>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isFalse);
+        final curve =
+            result.document!.root as GmlCurve;
+        expect(curve.coordinates, hasLength(3));
+      });
+
+      test(
+          'parses Curve with multiple '
+          'segments', () {
+        const xml = '''
+<gml:Curve xmlns:gml="http://www.opengis.net/gml/3.2">
+  <gml:segments>
+    <gml:LineStringSegment>
+      <gml:posList>0 0 1 1</gml:posList>
+    </gml:LineStringSegment>
+    <gml:LineStringSegment>
+      <gml:posList>1 1 2 2 3 3</gml:posList>
+    </gml:LineStringSegment>
+  </gml:segments>
+</gml:Curve>''';
+        final result = GmlParser.parseXmlString(xml);
+        final curve =
+            result.document!.root as GmlCurve;
+        expect(curve.coordinates, hasLength(5));
+      });
+    });
+
+    group('Surface', () {
+      test('parses Surface with PolygonPatch', () {
+        const xml = '''
+<gml:Surface xmlns:gml="http://www.opengis.net/gml/3.2">
+  <gml:patches>
+    <gml:PolygonPatch>
+      <gml:exterior>
+        <gml:LinearRing>
+          <gml:posList>0 0 10 0 10 10 0 10 0 0</gml:posList>
+        </gml:LinearRing>
+      </gml:exterior>
+    </gml:PolygonPatch>
+  </gml:patches>
+</gml:Surface>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isFalse);
+        final surface =
+            result.document!.root as GmlSurface;
+        expect(surface.patches, hasLength(1));
+        expect(
+          surface.patches[0].exterior.coordinates,
+          hasLength(5),
+        );
+      });
+
+      test(
+          'reports error for Surface '
+          'without patches', () {
+        const xml = '''
+<gml:Surface xmlns:gml="http://www.opengis.net/gml/3.2">
+</gml:Surface>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isTrue);
+        expect(
+          result.issues.first.code,
+          'missing_patches',
+        );
+      });
+    });
+
+    group('MultiPoint', () {
+      test('parses with pointMember', () {
+        const xml = '''
+<gml:MultiPoint xmlns:gml="http://www.opengis.net/gml/3.2">
+  <gml:pointMember>
+    <gml:Point><gml:pos>1 2</gml:pos></gml:Point>
+  </gml:pointMember>
+  <gml:pointMember>
+    <gml:Point><gml:pos>3 4</gml:pos></gml:Point>
+  </gml:pointMember>
+</gml:MultiPoint>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isFalse);
+        final mp =
+            result.document!.root as GmlMultiPoint;
+        expect(mp.points, hasLength(2));
+        expect(mp.points[0].coordinate.x, 1.0);
+        expect(mp.points[1].coordinate.x, 3.0);
+      });
+
+      test('parses with pointMembers (plural)', () {
+        const xml = '''
+<gml:MultiPoint xmlns:gml="http://www.opengis.net/gml/3.2">
+  <gml:pointMembers>
+    <gml:Point><gml:pos>5 6</gml:pos></gml:Point>
+    <gml:Point><gml:pos>7 8</gml:pos></gml:Point>
+  </gml:pointMembers>
+</gml:MultiPoint>''';
+        final result = GmlParser.parseXmlString(xml);
+        final mp =
+            result.document!.root as GmlMultiPoint;
+        expect(mp.points, hasLength(2));
+      });
+    });
+
+    group('MultiLineString', () {
+      test(
+          'parses GML 2 with '
+          'lineStringMember', () {
+        const xml = '''
+<gml:MultiLineString xmlns:gml="http://www.opengis.net/gml">
+  <gml:lineStringMember>
+    <gml:LineString>
+      <gml:coordinates>0,0 1,1</gml:coordinates>
+    </gml:LineString>
+  </gml:lineStringMember>
+  <gml:lineStringMember>
+    <gml:LineString>
+      <gml:coordinates>2,2 3,3</gml:coordinates>
+    </gml:LineString>
+  </gml:lineStringMember>
+</gml:MultiLineString>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isFalse);
+        final mls = result.document!.root
+            as GmlMultiLineString;
+        expect(mls.lineStrings, hasLength(2));
+      });
+    });
+
+    group('MultiCurve', () {
+      test(
+          'parses GML 3 MultiCurve with '
+          'LineString members', () {
+        const xml = '''
+<gml:MultiCurve xmlns:gml="http://www.opengis.net/gml/3.2">
+  <gml:curveMember>
+    <gml:LineString>
+      <gml:posList>0 0 1 1</gml:posList>
+    </gml:LineString>
+  </gml:curveMember>
+  <gml:curveMember>
+    <gml:LineString>
+      <gml:posList>2 2 3 3</gml:posList>
+    </gml:LineString>
+  </gml:curveMember>
+</gml:MultiCurve>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isFalse);
+        final mls = result.document!.root
+            as GmlMultiLineString;
+        expect(mls.lineStrings, hasLength(2));
+      });
+
+      test(
+          'parses MultiCurve with '
+          'Curve members', () {
+        const xml = '''
+<gml:MultiCurve xmlns:gml="http://www.opengis.net/gml/3.2">
+  <gml:curveMember>
+    <gml:Curve>
+      <gml:segments>
+        <gml:LineStringSegment>
+          <gml:posList>0 0 1 1 2 2</gml:posList>
+        </gml:LineStringSegment>
+      </gml:segments>
+    </gml:Curve>
+  </gml:curveMember>
+</gml:MultiCurve>''';
+        final result = GmlParser.parseXmlString(xml);
+        final mls = result.document!.root
+            as GmlMultiLineString;
+        expect(mls.lineStrings, hasLength(1));
+        expect(
+          mls.lineStrings[0].coordinates,
+          hasLength(3),
+        );
+      });
+    });
+
+    group('MultiPolygon', () {
+      test(
+          'parses GML 2 with '
+          'polygonMember', () {
+        const xml = '''
+<gml:MultiPolygon xmlns:gml="http://www.opengis.net/gml"
+                  srsName="EPSG:4326">
+  <gml:polygonMember>
+    <gml:Polygon>
+      <gml:outerBoundaryIs>
+        <gml:LinearRing>
+          <gml:coordinates>0,0 10,0 10,10 0,10 0,0</gml:coordinates>
+        </gml:LinearRing>
+      </gml:outerBoundaryIs>
+    </gml:Polygon>
+  </gml:polygonMember>
+</gml:MultiPolygon>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isFalse);
+        final mp = result.document!.root
+            as GmlMultiPolygon;
+        expect(mp.polygons, hasLength(1));
+        expect(mp.srsName, 'EPSG:4326');
+      });
+    });
+
+    group('MultiSurface', () {
+      test(
+          'parses GML 3 MultiSurface with '
+          'surfaceMember', () {
+        const xml = '''
+<gml:MultiSurface xmlns:gml="http://www.opengis.net/gml/3.2"
+                  srsName="EPSG:4326" srsDimension="2">
+  <gml:surfaceMember>
+    <gml:Polygon>
+      <gml:exterior>
+        <gml:LinearRing>
+          <gml:posList>0 0 10 0 10 10 0 10 0 0</gml:posList>
+        </gml:LinearRing>
+      </gml:exterior>
+    </gml:Polygon>
+  </gml:surfaceMember>
+  <gml:surfaceMember>
+    <gml:Polygon>
+      <gml:exterior>
+        <gml:LinearRing>
+          <gml:posList>20 20 30 20 30 30 20 30 20 20</gml:posList>
+        </gml:LinearRing>
+      </gml:exterior>
+    </gml:Polygon>
+  </gml:surfaceMember>
+</gml:MultiSurface>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isFalse);
+        final mp = result.document!.root
+            as GmlMultiPolygon;
+        expect(mp.polygons, hasLength(2));
+        expect(mp.srsName, 'EPSG:4326');
+      });
+
+      test('parses in FeatureCollection context',
+          () {
+        const xml = '''
+<wfs:FeatureCollection
+    xmlns:wfs="http://www.opengis.net/wfs/2.0"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:app="http://example.com">
+  <wfs:member>
+    <app:Lake gml:id="lake.1">
+      <app:geom>
+        <gml:MultiSurface srsName="EPSG:4326" srsDimension="2">
+          <gml:surfaceMember>
+            <gml:Polygon>
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>0 0 1 0 1 1 0 1 0 0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </app:geom>
+      <app:name>Test Lake</app:name>
+    </app:Lake>
+  </wfs:member>
+</wfs:FeatureCollection>''';
+        final result = GmlParser.parseXmlString(xml);
+        expect(result.hasErrors, isFalse);
+        final fc = result.document!.root
+            as GmlFeatureCollection;
+        expect(fc.features, hasLength(1));
+        final geomProp = fc.features[0]
+            .properties['geom'] as GmlGeometryProperty;
+        expect(
+          geomProp.geometry,
+          isA<GmlMultiPolygon>(),
+        );
+      });
+    });
   });
 }

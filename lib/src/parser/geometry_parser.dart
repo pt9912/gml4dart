@@ -17,6 +17,18 @@ GmlGeometry? _parseGeometry(
     'Polygon' => _parsePolygon(element, issues),
     'Envelope' => _parseEnvelope(element, issues),
     'Box' => _parseBox(element, issues),
+    'Curve' => _parseCurve(element, issues),
+    'Surface' => _parseSurface(element, issues),
+    'MultiPoint' =>
+      _parseMultiPoint(element, issues),
+    'MultiLineString' =>
+      _parseMultiLineString(element, issues),
+    'MultiCurve' =>
+      _parseMultiCurve(element, issues),
+    'MultiPolygon' =>
+      _parseMultiPolygon(element, issues),
+    'MultiSurface' =>
+      _parseMultiSurface(element, issues),
     _ => null,
   };
 }
@@ -204,6 +216,267 @@ GmlBox? _parseBox(
   return GmlBox(
     lowerCorner: coords[0],
     upperCorner: coords[1],
+    srsName: _getSrsName(element),
+  );
+}
+
+// --- Phase 3: Extended geometries ---
+
+GmlCurve? _parseCurve(
+  XmlElement element,
+  List<GmlParseIssue> issues,
+) {
+  final coords = <GmlCoordinate>[];
+
+  // <gml:segments><gml:LineStringSegment>
+  final segments =
+      _findGmlChild(element, 'segments');
+  if (segments != null) {
+    for (final seg in segments.childElements) {
+      if (_isGmlNamespace(seg.namespaceUri)) {
+        coords.addAll(
+          _parseCoordsFromElement(seg, issues),
+        );
+      }
+    }
+  }
+
+  if (coords.isEmpty) {
+    // Fallback: direct coordinates on Curve
+    coords.addAll(
+      _parseCoordsFromElement(element, issues),
+    );
+  }
+
+  if (coords.isEmpty) {
+    issues.add(GmlParseIssue(
+      severity: GmlIssueSeverity.error,
+      code: 'missing_coordinates',
+      message: 'Curve element has no coordinates',
+      location: element.name.qualified,
+    ));
+    return null;
+  }
+
+  return GmlCurve(
+    coordinates: coords,
+    srsName: _getSrsName(element),
+  );
+}
+
+GmlSurface? _parseSurface(
+  XmlElement element,
+  List<GmlParseIssue> issues,
+) {
+  final patches = <GmlPolygon>[];
+
+  // <gml:patches><gml:PolygonPatch>
+  final patchesEl =
+      _findGmlChild(element, 'patches');
+  if (patchesEl != null) {
+    for (final patch in patchesEl.childElements) {
+      if (_isGmlNamespace(patch.namespaceUri)) {
+        // PolygonPatch has same structure as Polygon
+        final poly = _parsePolygon(patch, issues);
+        if (poly != null) patches.add(poly);
+      }
+    }
+  }
+
+  if (patches.isEmpty) {
+    issues.add(GmlParseIssue(
+      severity: GmlIssueSeverity.error,
+      code: 'missing_patches',
+      message: 'Surface element has no patches',
+      location: element.name.qualified,
+    ));
+    return null;
+  }
+
+  return GmlSurface(
+    patches: patches,
+    srsName: _getSrsName(element),
+  );
+}
+
+GmlMultiPoint? _parseMultiPoint(
+  XmlElement element,
+  List<GmlParseIssue> issues,
+) {
+  final points = <GmlPoint>[];
+
+  // <gml:pointMember><gml:Point>
+  for (final member
+      in _findGmlChildren(element, 'pointMember')) {
+    final pointEl = _findGmlChild(member, 'Point');
+    if (pointEl != null) {
+      final p = _parsePoint(pointEl, issues);
+      if (p != null) points.add(p);
+    }
+  }
+
+  // <gml:pointMembers> (plural)
+  final membersEl =
+      _findGmlChild(element, 'pointMembers');
+  if (membersEl != null) {
+    for (final child in membersEl.childElements) {
+      if (_isGmlNamespace(child.namespaceUri) &&
+          child.localName == 'Point') {
+        final p = _parsePoint(child, issues);
+        if (p != null) points.add(p);
+      }
+    }
+  }
+
+  return GmlMultiPoint(
+    points: points,
+    srsName: _getSrsName(element),
+  );
+}
+
+// GML 2: <gml:MultiLineString>
+GmlMultiLineString? _parseMultiLineString(
+  XmlElement element,
+  List<GmlParseIssue> issues,
+) {
+  final lineStrings = <GmlLineString>[];
+
+  // <gml:lineStringMember><gml:LineString>
+  for (final member in _findGmlChildren(
+    element,
+    'lineStringMember',
+  )) {
+    final lsEl =
+        _findGmlChild(member, 'LineString');
+    if (lsEl != null) {
+      final ls = _parseLineString(lsEl, issues);
+      if (ls != null) lineStrings.add(ls);
+    }
+  }
+
+  return GmlMultiLineString(
+    lineStrings: lineStrings,
+    srsName: _getSrsName(element),
+  );
+}
+
+// GML 3: <gml:MultiCurve> → GmlMultiLineString
+GmlMultiLineString? _parseMultiCurve(
+  XmlElement element,
+  List<GmlParseIssue> issues,
+) {
+  final lineStrings = <GmlLineString>[];
+
+  // <gml:curveMember>
+  for (final member
+      in _findGmlChildren(element, 'curveMember')) {
+    final child = member.childElements.firstOrNull;
+    if (child != null &&
+        _isGmlNamespace(child.namespaceUri)) {
+      if (child.localName == 'LineString') {
+        final ls = _parseLineString(child, issues);
+        if (ls != null) lineStrings.add(ls);
+      } else if (child.localName == 'Curve') {
+        // Flatten Curve segments into a LineString
+        final curve = _parseCurve(child, issues);
+        if (curve != null) {
+          lineStrings.add(GmlLineString(
+            coordinates: curve.coordinates,
+            srsName: curve.srsName,
+          ));
+        }
+      }
+    }
+  }
+
+  // <gml:curveMembers> (plural)
+  final membersEl =
+      _findGmlChild(element, 'curveMembers');
+  if (membersEl != null) {
+    for (final child in membersEl.childElements) {
+      if (!_isGmlNamespace(child.namespaceUri)) {
+        continue;
+      }
+      if (child.localName == 'LineString') {
+        final ls = _parseLineString(child, issues);
+        if (ls != null) lineStrings.add(ls);
+      } else if (child.localName == 'Curve') {
+        final curve = _parseCurve(child, issues);
+        if (curve != null) {
+          lineStrings.add(GmlLineString(
+            coordinates: curve.coordinates,
+            srsName: curve.srsName,
+          ));
+        }
+      }
+    }
+  }
+
+  return GmlMultiLineString(
+    lineStrings: lineStrings,
+    srsName: _getSrsName(element),
+  );
+}
+
+// GML 2: <gml:MultiPolygon>
+GmlMultiPolygon? _parseMultiPolygon(
+  XmlElement element,
+  List<GmlParseIssue> issues,
+) {
+  final polygons = <GmlPolygon>[];
+
+  // <gml:polygonMember><gml:Polygon>
+  for (final member
+      in _findGmlChildren(element, 'polygonMember')) {
+    final polyEl = _findGmlChild(member, 'Polygon');
+    if (polyEl != null) {
+      final poly = _parsePolygon(polyEl, issues);
+      if (poly != null) polygons.add(poly);
+    }
+  }
+
+  return GmlMultiPolygon(
+    polygons: polygons,
+    srsName: _getSrsName(element),
+  );
+}
+
+// GML 3: <gml:MultiSurface> → GmlMultiPolygon
+GmlMultiPolygon? _parseMultiSurface(
+  XmlElement element,
+  List<GmlParseIssue> issues,
+) {
+  final polygons = <GmlPolygon>[];
+
+  // <gml:surfaceMember>
+  for (final member in _findGmlChildren(
+    element,
+    'surfaceMember',
+  )) {
+    final child = member.childElements.firstOrNull;
+    if (child != null &&
+        _isGmlNamespace(child.namespaceUri) &&
+        child.localName == 'Polygon') {
+      final poly = _parsePolygon(child, issues);
+      if (poly != null) polygons.add(poly);
+    }
+  }
+
+  // <gml:surfaceMembers> (plural)
+  final membersEl =
+      _findGmlChild(element, 'surfaceMembers');
+  if (membersEl != null) {
+    for (final child in membersEl.childElements) {
+      if (_isGmlNamespace(child.namespaceUri) &&
+          child.localName == 'Polygon') {
+        final poly = _parsePolygon(child, issues);
+        if (poly != null) polygons.add(poly);
+      }
+    }
+  }
+
+  return GmlMultiPolygon(
+    polygons: polygons,
     srsName: _getSrsName(element),
   );
 }
