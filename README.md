@@ -122,9 +122,20 @@ Kein lokales Dart SDK nötig; alle Standardbefehle können via Docker laufen:
 ```bash
 docker build --target analyze -t gml4dart:analyze .
 docker build --target test -t gml4dart:test .
+docker build --target coverage --no-cache-filter coverage --progress=plain .
+docker build --target coverage-check --no-cache-filter coverage --progress=plain --build-arg COVERAGE_MIN=95 .
 docker build --target doc -t gml4dart:doc .
 docker build --target publish-check -t gml4dart:publish-check .
 ```
+
+### API-Dokumentation generieren
+
+```bash
+docker build --target doc -t gml4dart:doc .
+docker run --rm gml4dart:doc | tar -xzf -
+```
+
+Die HTML-Dokumentation liegt danach in `doc/api/`.
 
 
 ### Manueller Publish via Docker

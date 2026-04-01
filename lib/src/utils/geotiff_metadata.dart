@@ -3,6 +3,7 @@ part of '../gml4dart_base.dart';
 /// GeoTIFF-compatible metadata extracted from a
 /// grid-based GML coverage.
 final class GeoTiffMetadata {
+  /// Creates a [GeoTiffMetadata].
   const GeoTiffMetadata({
     required this.width,
     required this.height,
