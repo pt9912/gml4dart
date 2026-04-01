@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- rename `docs/` to `doc/` per Pub layout convention
+
 ## 0.1.1
 
 - dartdoc comments for all public API elements

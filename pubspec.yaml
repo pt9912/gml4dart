@@ -1,6 +1,6 @@
 name: gml4dart
 description: A pure Dart library for parsing GML (Geography Markup Language) 2.1.2 and 3.x documents.
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/pt9912/gml4dart
 repository: https://github.com/pt9912/gml4dart
 
